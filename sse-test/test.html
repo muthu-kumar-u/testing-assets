@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SSE Stream Test</title>
+  </head>
+  <body>
+    <h1>Face Log Upload + SSE Test</h1>
+
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="startSSE()">Start SSE & Upload</button>
+
+    <pre id="output"></pre>
+
+    <script>
+      const token = "";
+
+      let formData = null;
+
+      async function startSSE() {
+        const fileInput = document.getElementById("imageInput");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert("Please select an image.");
+          return;
+        }
+
+        formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          // stream subscribe url
+          const streamResponse = await fetch("", {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          if (!streamResponse.ok || !streamResponse.body) {
+            throw new Error("Failed to connect SSE stream");
+          }
+
+          log("✅ SSE connection opened");
+
+          const reader = streamResponse.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let buffer = "";
+          let sseReady = false;
+
+          (async function readStream() {
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+
+              let lines = buffer.split("\n");
+              buffer = lines.pop(); // save incomplete line
+
+              for (let line of lines) {
+                if (line.startsWith("data:")) {
+                  try {
+                    const json = JSON.parse(line.slice(5).trim());
+                    log("📡 Event received:\n" + JSON.stringify(json, null, 2));
+
+                    if (json.code === 200 && !sseReady) {
+                      sseReady = true;
+                      log("🔄 SSE ready, now uploading image...");
+                      await uploadImageFile();
+                    }
+                  } catch (e) {
+                    log("❌ Invalid JSON: " + line);
+                  }
+                }
+              }
+            }
+          })();
+        } catch (error) {
+          log("❌ Error: " + error.message);
+        }
+      }
+
+      async function uploadImageFile() {
+        try {
+          // stream input
+          const uploadResponse = await fetch("", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error("Upload failed: " + uploadResponse.status);
+          }
+
+          log("📤 Image uploaded. Waiting for analysis...");
+        } catch (error) {
+          log("❌ Upload error: " + error.message);
+        }
+      }
+
+      function log(message) {
+        document.getElementById("output").textContent += message + "\n";
+      }
+    </script>
+  </body>
+</html>

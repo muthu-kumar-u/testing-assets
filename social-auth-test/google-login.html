@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Google OAuth2 Test</title>
+  </head>
+  <body>
+    <h2>Login with Google</h2>
+    <button onclick="loginWithGoogle()">Sign In with Google</button>
+
+    <script>
+      function loginWithGoogle() {
+        const clientId = "";
+        const redirectUri = "";
+        const scope = "email profile openid";
+        const responseType = "code";
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&access_type=offline&prompt=consent`;
+
+        window.location.href = authUrl;
+      }
+    </script>
+  </body>
+</html>

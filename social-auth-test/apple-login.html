@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Apple OAuth2 Test</title>
+  </head>
+  <body>
+    <h2>Login with Apple</h2>
+    <button onclick="loginWithApple()">Sign In with Apple</button>
+
+    <script>
+      function loginWithApple() {
+        const clientId = "";
+        const redirectUri = "";
+        const scope = "name email";
+        const useBundleId = false; // <== Set this dynamically if needed
+
+        // Embed useBundleId in the state param
+        const state = btoa(JSON.stringify({ useBundleId })); // base64 encode
+
+        const responseType = "code id_token";
+        const responseMode = "form_post";
+
+        const authUrl = `https://appleid.apple.com/auth/authorize?response_type=${responseType}&client_id=${clientId}&redirect_uri=${encodeURIComponent(
+          redirectUri
+        )}&scope=${scope}&state=${state}&response_mode=${responseMode}`;
+
+        window.location.href = authUrl;
+      }
+    </script>
+  </body>
+</html>
